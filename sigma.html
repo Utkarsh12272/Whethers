@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Quiz with Color Changing Background</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(-45deg, #F5B7B1, #D5DBDB, #AED6F1, #D7BDE2);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .quiz-box {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      width: 400px;
+      border: 2px solid #3498db;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      text-align: center;
+      color: #3498db;
+      font-size: 24px;
+    }
+
+    .question {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #2c3e50;
+    }
+
+    .options label {
+      display: block;
+      margin-bottom: 10px;
+      cursor: pointer;
+      background-color: #f9f9f9;
+      padding: 8px;
+      border-radius: 8px;
+      transition: background-color 0.3s ease;
+    }
+
+    .options input[type="radio"] {
+      display: none;
+    }
+
+    .options label:hover {
+      background-color: #e0f7fa;
+    }
+
+    .options input[type="radio"]:checked + label {
+      background-color: #d1ecf1;
+      border-left: 5px solid #3498db;
+    }
+
+    #timer {
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+      color: #e74c3c;
+      margin-bottom: 15px;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 18px;
+      text-align: center;
+      color: #27ae60;
+    }
+
+    #restart-btn {
+      display: none;
+      background-color: #3498db;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+
+    #restart-btn:hover {
+      background-color: #2980b9;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-box">
+    <h2>Quiz App</h2>
+    <div id="timer">Time Left: <span id="time">30</span> seconds</div>
+    <div class="question" id="question">Loading question...</div>
+    <div class="options">
+      <label><input type="radio" name="answer" value="a" /> <span id="a_text"></span></label>
+      <label><input type="radio" name="answer" value="b" /> <span id="b_text"></span></label>
+      <label><input type="radio" name="answer" value="c" /> <span id="c_text"></span></label>
+      <label><input type="radio" name="answer" value="d" /> <span id="d_text"></span></label>
+    </div>
+    <div id="result"></div>
+    <button id="restart-btn">Restart Quiz</button>
+  </div>
+
+  <script>
+    const quizData = [
+      {
+        question: "Which planet is known as the Red Planet?",
+        a: "Earth",
+        b: "Mars",
+        c: "Jupiter",
+        d: "Venus",
+        correct: "b"
+      },
+      {
+        question: "What is the capital of Italy?",
+        a: "Rome",
+        b: "Madrid",
+        c: "Berlin",
+        d: "Paris",
+        correct: "a"
+      },
+      {
+        question: "What is 2 + 2?",
+        a: "3",
+        b: "4",
+        c: "5",
+        d: "6",
+        correct: "b"
+      },
+      {
+        question: "Which element's chemical symbol is O?",
+        a: "Oxygen",
+        b: "Osmium",
+        c: "Ozone",
+        d: "Oganesson",
+        correct: "a"
+      },
+      {
+        question: "What is the largest ocean on Earth?",
+        a: "Atlantic Ocean",
+        b: "Indian Ocean",
+        c: "Southern Ocean",
+        d: "Pacific Ocean",
+        correct: "d"
+      },
+      // New questions added below
+      {
+        question: "Who painted the Mona Lisa?",
+        a: "Vincent van Gogh",
+        b: "Pablo Picasso",
+        c: "Leonardo da Vinci",
+        d: "Claude Monet",
+        correct: "c"
+      },
+      {
+        question: "What is the longest river in the world?",
+        a: "Amazon River",
+        b: "Nile River",
+        c: "Yangtze River",
+        d: "Mississippi River",
+        correct: "b"
+      },
+      {
+        question: "In what year did World War II end?",
+        a: "1945",
+        b: "1940",
+        c: "1939",
+        d: "1950",
+        correct: "a"
+      },
+      {
+        question: "Which country is known as the Land of the Rising Sun?",
+        a: "China",
+        b: "Japan",
+        c: "South Korea",
+        d: "India",
+        correct: "b"
+      },
+      {
+        question: "What is the chemical symbol for gold?",
+        a: "Au",
+        b: "Ag",
+        c: "Pb",
+        d: "Fe",
+        correct: "a"
+      }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let timer;
+    let timeLeft = 30;
+
+    const questionEl = document.getElementById('question');
+    const a_text = document.getElementById('a_text');
+    const b_text = document.getElementById('b_text');
+    const c_text = document.getElementById('c_text');
+    const d_text = document.getElementById('d_text');
+    const resultEl = document.getElementById('result');
+    const timerEl = document.getElementById('time');
+    const restartBtn = document.getElementById('restart-btn');
+
+    function loadQuestion() {
+      const q = quizData[currentQuestion];
+      questionEl.textContent = q.question;
+      a_text.textContent = q.a;
+      b_text.textContent = q.b;
+      c_text.textContent = q.c;
+      d_text.textContent = q.d;
+      document.querySelectorAll('input[name="answer"]').forEach(input => input.checked = false);
+
+      timeLeft = 10;
+      timerEl.textContent = timeLeft;
+      clearInterval(timer);
+      timer = setInterval(countdown, 1000);
+    }
+
+    function countdown() {
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        moveToNextQuestion();
+      } else {
+        timeLeft--;
+        timerEl.textContent = timeLeft;
+      }
+    }
+
+    function getSelectedAnswer() {
+      let answer;
+      document.querySelectorAll('input[name="answer"]').forEach(input => {
+        if (input.checked) answer = input.value;
+      });
+      return answer;
+    }
+
+    function moveToNextQuestion() {
+      const answer = getSelectedAnswer();
+
+      if (answer === quizData[currentQuestion].correct) {
+        score++;
+      }
+
+      currentQuestion++;
+      if (currentQuestion < quizData.length) {
+        loadQuestion();
+      } else {
+        setTimeout(() => {
+          resultEl.innerHTML = `🎉 You scored <strong>${score}</strong> out of <strong>${quizData.length}</strong>!`;
+          restartBtn.style.display = 'block';
+        }, 1000);
+      }
+    }
+
+    document.querySelectorAll('input[name="answer"]').forEach(input => {
+      input.addEventListener('change', moveToNextQuestion);
+    });
+
+    restartBtn.addEventListener('click', () => {
+      currentQuestion = 0;
+      score = 0;
+      restartBtn.style.display = 'none';
+      loadQuestion();
+    });
+
+    loadQuestion();
+  </script>
+</body>
+</html>
